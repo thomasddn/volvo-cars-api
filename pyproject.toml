@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "volvocarsapi"
+version = "0.0.1"
+authors = [
+  { name="thomasddn" },
+]
+description = "Python client for the Volvo Cars API."
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "GPL-3.0"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+  "aiohttp>=3.11.16",
+  "yarl>=1.18.3"
+]
+
+[project.urls]
+Homepage = "https://github.com/thomasddn/volvo-cars-api"
+Issues = "https://github.com/thomasddn/volvo-cars-api/issues"
+Funding = "https://ko-fi.com/N4N7UZ6KN"

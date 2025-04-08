@@ -1,0 +1,13 @@
+{
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    // https://code.visualstudio.com/docs/python/testing#_pytest-configuration-settings
+    "python.testing.pytestEnabled": true,
+    // https://code.visualstudio.com/docs/python/linting#_general-settings
+    "pylint.importStrategy": "fromEnvironment",
+    // "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.diagnosticMode": "workspace",
+    "python.testing.unittestEnabled": false,
+  }
+  

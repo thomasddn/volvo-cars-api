@@ -56,9 +56,9 @@ class VolvoCarsApi:
     ) -> None:
         """Initialize Volvo Cars API."""
         self._client = client
+        self._token_manager = token_manager
         self._vin = vin
         self._api_key = api_key
-        self._token_manager = token_manager
 
     async def async_get_api_status(self) -> dict[str, VolvoCarsValue]:
         """Check the API status."""
