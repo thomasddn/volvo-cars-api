@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "volvocarsapi"
-version = "0.0.1"
+version = "0.0.0"
 authors = [
   { name="thomasddn" },
 ]

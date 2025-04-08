@@ -16,6 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set version in manifest.json
+        run: |
+          # Extract version from tag (e.g., "refs/tags/v1.2.3" becomes "1.2.3")
+          version="${GITHUB_REF#refs/tags/v}"
+          echo "Setting version to ${version}"
+          # Update the version in pyproject.toml (assumes a `version = "..."` line)
+          sed -i -E "s/^version = \"[^\"]+\"/version = \"${version}\"/" pyproject.toml
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
