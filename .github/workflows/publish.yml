@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set version in manifest.json
+      - name: Set version in pyproject.toml
         run: |
           # Extract version from tag (e.g., "refs/tags/v1.2.3" becomes "1.2.3")
           version="${GITHUB_REF#refs/tags/v}"

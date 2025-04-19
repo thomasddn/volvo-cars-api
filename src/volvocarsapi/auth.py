@@ -12,7 +12,7 @@ from typing import Any, cast
 from aiohttp import ClientError, ClientSession, ClientTimeout, hdrs
 from yarl import URL
 
-from .models import TokenResponse, VolvoAuthException
+from .models import TokenResponse, VolvoApiException, VolvoAuthException
 from .util import redact_data
 
 AUTHORIZE_URL = "https://volvoid.eu.volvocars.com/as/authorization.oauth2"
@@ -231,6 +231,9 @@ class VolvoCarsAuth(AccessTokenManager):
                 response.raise_for_status()
                 return data
 
-        except (ClientError, TimeoutError) as ex:
+        except ClientError as ex:
             _LOGGER.debug("Request [%s] error: %s", name, ex.__class__.__name__)
             raise VolvoAuthException(ex.__class__.__name__) from ex
+        except TimeoutError as ex:
+            _LOGGER.debug("Request [%s] error: %s", name, ex.__class__.__name__)
+            raise VolvoApiException(ex.__class__.__name__) from ex
