@@ -4,7 +4,7 @@ This python library lets you use the [Volvo Cars API](https://developer.volvocar
 
 
 [![GitHub release][releases-shield]][releases]
-[![Sponsor][sponsor-shield]][sponsor]
+[![Sponsor][sponsor-shield]](#sponsor)
 
 ## Requirements
 
@@ -66,11 +66,14 @@ api = VolvoCarsApi(client_session, auth, vin, api_key)
 engine_warnings = await api.async_get_engine_warnings()
 ```
 
+<a name="sponsor"></a>
+
 ## 🥤 Powered by snacks
 
 When I'm coding, I run on coffee, Coca-Cola*, and Lays* potato chips. If you'd like to show your appreciation for this project, consider making a small donation to help keep my stash stocked! (Note: I'm also happy to accept 1,000,000 USD — or EUR, I'm not picky. 😁)
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/N4N7UZ6KN)
+[![ko-fi sponsor][kofi-sponsor-shield]][kofi-sponsor]
+[![github sponsor][github-sponsor-shield]][github-sponsor]
 
 <sub><sub>\* No affiliation with these brands — just personal favorites!</sub></sub>
 
@@ -78,4 +81,7 @@ When I'm coding, I run on coffee, Coca-Cola*, and Lays* potato chips. If you'd l
 [releases-shield]: https://img.shields.io/github/v/release/thomasddn/volvo-cars-api?style=flat-square
 [releases]: https://github.com/thomasddn/volvo-cars-api/releases
 [sponsor-shield]: https://img.shields.io/static/v1?label=sponsor&message=%E2%9D%A4&color=%23fe8e86&style=flat-square
-[sponsor]: https://ko-fi.com/N4N7UZ6KN
+[kofi-sponsor-shield]: https://img.shields.io/badge/Support_me_on_Ko--fi-%E2%9D%A4-fe8e86?style=for-the-badge&logo=kofi&logoColor=ffffff
+[kofi-sponsor]: https://ko-fi.com/N4N7UZ6KN
+[github-sponsor-shield]: https://img.shields.io/badge/Support_me_on_GitHub-%E2%9D%A4-fe8e86?style=for-the-badge&logo=github&color=fe8e86
+[github-sponsor]: https://github.com/sponsors/thomasddn
