@@ -159,7 +159,7 @@ class VolvoCarsAuth(AccessTokenManager):
             TOKEN_URL,
             headers={"Authorization": f"Basic {self._encoded_credentials}"},
             data=data,
-            name="tokens",
+            operation="tokens",
         )
 
         self._token = self._create_token_response(response)
@@ -177,7 +177,7 @@ class VolvoCarsAuth(AccessTokenManager):
             TOKEN_URL,
             headers={"Authorization": f"Basic {self._encoded_credentials}"},
             data=data,
-            name="token refresh",
+            operation="token refresh",
         )
 
         self._token = self._create_token_response(response)
@@ -203,9 +203,9 @@ class VolvoCarsAuth(AccessTokenManager):
         headers: dict[str, str] | None = None,
         data: dict[str, str] | None = None,
         json: dict[str, Any] | None = None,
-        name: str = "",
+        operation: str = "",
     ) -> dict[str, Any]:
-        _LOGGER.debug("Request [%s]", name)
+        _LOGGER.debug("Request [%s]", operation)
 
         try:
             async with self.websession.request(
@@ -217,14 +217,14 @@ class VolvoCarsAuth(AccessTokenManager):
                 json=json,
                 timeout=_API_REQUEST_TIMEOUT,
             ) as response:
-                _LOGGER.debug("Request [%s] status: %s", name, response.status)
+                _LOGGER.debug("Request [%s] status: %s", operation, response.status)
 
                 json = await response.json()
                 data = cast(dict[str, Any], json)
 
                 _LOGGER.debug(
                     "Request [%s] response: %s",
-                    name,
+                    operation,
                     redact_data(data, _DATA_TO_REDACT),
                 )
 
@@ -232,8 +232,8 @@ class VolvoCarsAuth(AccessTokenManager):
                 return data
 
         except ClientError as ex:
-            _LOGGER.debug("Request [%s] error: %s", name, ex.__class__.__name__)
-            raise VolvoAuthException(ex.__class__.__name__) from ex
+            _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)
+            raise VolvoAuthException(ex.__class__.__name__, operation) from ex
         except TimeoutError as ex:
-            _LOGGER.debug("Request [%s] error: %s", name, ex.__class__.__name__)
-            raise VolvoApiException(ex.__class__.__name__) from ex
+            _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)
+            raise VolvoApiException(ex.__class__.__name__, operation) from ex

@@ -191,7 +191,7 @@ class VolvoCarsApi:
         Required scopes: openid conve:vehicle_relation
         """
         url = f"{_API_URL}{_API_CONNECTED_ENDPOINT}"
-        body = await self._async_request(hdrs.METH_GET, url, name="vehicles")
+        body = await self._async_request(hdrs.METH_GET, url, operation="vehicles")
         items = self._get_data_list(body)
         return [item["vin"] for item in items]
 
@@ -258,13 +258,13 @@ class VolvoCarsApi:
 
     async def _async_get(self, endpoint: str, operation: str) -> dict[str, Any]:
         url = self._create_vin_url(endpoint, operation)
-        return await self._async_request(hdrs.METH_GET, url, name=operation)
+        return await self._async_request(hdrs.METH_GET, url, operation=operation)
 
     async def _async_post(
         self, endpoint: str, operation: str, body: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         url = self._create_vin_url(endpoint, operation)
-        return await self._async_request(hdrs.METH_POST, url, name=operation, body=body)
+        return await self._async_request(hdrs.METH_POST, url, operation=operation, body=body)
 
     def _get_data_list(self, body: dict[str, Any]) -> list[Any]:
         return cast(list[Any], body.get("data", []))
@@ -281,7 +281,7 @@ class VolvoCarsApi:
         method: str,
         url: str,
         *,
-        name: str,
+        operation: str,
         body: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         access_token = await self._token_manager.async_get_access_token()
@@ -293,24 +293,24 @@ class VolvoCarsApi:
         if method == hdrs.METH_POST:
             headers[hdrs.CONTENT_TYPE] = "application/json"
 
-        data: dict[str, Any]
+        data: dict[str, Any] = {}
 
         try:
             _LOGGER.debug(
                 "Request [%s]: %s %s",
-                name,
+                operation,
                 method,
                 redact_url(url, self._vin),
             )
             async with self._client.request(
                 method, url, headers=headers, json=body, timeout=_API_REQUEST_TIMEOUT
             ) as response:
-                _LOGGER.debug("Request [%s] status: %s", name, response.status)
+                _LOGGER.debug("Request [%s] status: %s", operation, response.status)
                 json = await response.json()
                 data = cast(dict[str, Any], json)
                 _LOGGER.debug(
                     "Request [%s] response: %s",
-                    name,
+                    operation,
                     redact_data(data, _DATA_TO_REDACT),
                 )
                 response.raise_for_status()
@@ -319,7 +319,7 @@ class VolvoCarsApi:
             if ex.status == 404:
                 return {}
 
-            _LOGGER.debug("Request [%s] error: %s", name, ex.message)
+            _LOGGER.debug("Request [%s] error: %s", operation, ex.message)
 
             if ex.status == 422 and "/commands" in url:
                 return {
@@ -340,13 +340,13 @@ class VolvoCarsApi:
                     message = f"{error.message} {error.description}".strip()
 
             if ex.status in (401, 403):
-                raise VolvoAuthException(message) from redacted_exception
+                raise VolvoAuthException(message, operation) from redacted_exception
 
-            raise VolvoApiException(message) from redacted_exception
+            raise VolvoApiException(message, operation) from redacted_exception
 
         except (ClientError, TimeoutError) as ex:
-            _LOGGER.debug("Request [%s] error: %s", name, ex.__class__.__name__)
-            raise VolvoApiException(ex.__class__.__name__) from ex
+            _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)
+            raise VolvoApiException(ex.__class__.__name__, operation) from ex
 
 
 class RedactedClientResponseError(ClientResponseError):
