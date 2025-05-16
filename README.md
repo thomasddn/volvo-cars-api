@@ -60,7 +60,7 @@ await auth.async_request_token(code)
 vin = "YV123456789012345"
 
 # Create API client
-api = VolvoCarsApi(client_session, auth, vin, api_key)
+api = VolvoCarsApi(client_session, auth, api_key, vin)
 
 # Make API request
 engine_warnings = await api.async_get_engine_warnings()
@@ -74,8 +74,6 @@ If you'd like to show your appreciation for this project, feel free to toss a co
 
 [![ko-fi sponsor][kofi-sponsor-shield]][kofi-sponsor]
 [![github sponsor][github-sponsor-shield]][github-sponsor]
-
-<sub><sub>\* No affiliation with these brands — just personal favorites!</sub></sub>
 
 
 [releases-shield]: https://img.shields.io/github/v/release/thomasddn/volvo-cars-api?style=flat-square

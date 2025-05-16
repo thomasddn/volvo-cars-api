@@ -51,14 +51,14 @@ class VolvoCarsApi:
         self,
         client: ClientSession,
         token_manager: AccessTokenManager,
-        vin: str,
         api_key: str,
+        vin: str = "",
     ) -> None:
         """Initialize Volvo Cars API."""
         self._client = client
         self._token_manager = token_manager
-        self._vin = vin
-        self._api_key = api_key
+        self.api_key = api_key
+        self.vin = vin
 
     async def async_get_api_status(self) -> dict[str, VolvoCarsValue]:
         """Check the API status."""
@@ -81,84 +81,84 @@ class VolvoCarsApi:
 
         return {"apiStatus": VolvoCarsValue(message)}
 
-    async def async_get_brakes_status(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_brakes_status(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get brakes status.
 
         Required scopes: openid conve:brake_status
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "brakes")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "brakes", vin)
 
     async def async_get_command_accessibility(
-        self,
+        self, vin: str = ""
     ) -> dict[str, VolvoCarsValueField | None]:
         """Get availability status.
 
         Required scopes: openid conve:command_accessibility
         """
         return await self._async_get_field(
-            _API_CONNECTED_ENDPOINT, "command-accessibility"
+            _API_CONNECTED_ENDPOINT, "command-accessibility", vin
         )
 
-    async def async_get_commands(self) -> list[VolvoCarsAvailableCommand | None]:
+    async def async_get_commands(self, vin: str = "") -> list[VolvoCarsAvailableCommand | None]:
         """Get available commands.
 
         Required scopes: openid conve:commands
         """
-        body = await self._async_get(_API_CONNECTED_ENDPOINT, "commands")
+        body = await self._async_get(_API_CONNECTED_ENDPOINT, "commands", vin)
         items = self._get_data_list(body)
         return [VolvoCarsAvailableCommand.from_dict(item) for item in items]
 
-    async def async_get_diagnostics(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_diagnostics(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get diagnostics.
 
         Required scopes: openid conve:diagnostics_workshop
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "diagnostics")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "diagnostics", vin)
 
-    async def async_get_doors_status(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_doors_status(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get doors status.
 
         Required scopes: openid conve:doors_status conve:lock_status
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "doors")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "doors", vin)
 
-    async def async_get_engine_status(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_engine_status(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get engine status.
 
         Required scopes: openid conve:engine_status
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "engine-status")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "engine-status", vin)
 
-    async def async_get_engine_warnings(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_engine_warnings(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get engine warnings.
 
         Required scopes: openid conve:diagnostics_engine_status
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "engine")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "engine", vin)
 
-    async def async_get_fuel_status(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_fuel_status(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get fuel status.
 
         Required scopes: openid conve:fuel_status conve:battery_charge_level
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "fuel")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "fuel", vin)
 
-    async def async_get_location(self) -> dict[str, VolvoCarsLocation | None]:
+    async def async_get_location(self, vin: str = "") -> dict[str, VolvoCarsLocation | None]:
         """Get location.
 
         Required scopes: openid location:read
         """
-        data = await self._async_get_data_dict(_API_LOCATION_ENDPOINT, "location")
+        data = await self._async_get_data_dict(_API_LOCATION_ENDPOINT, "location", vin)
         return {"location": VolvoCarsLocation.from_dict(data)}
 
-    async def async_get_odometer(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_odometer(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get odometer.
 
         Required scopes: openid conve:odometer_status
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "odometer")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "odometer", vin)
 
-    async def async_get_recharge_status(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_recharge_status(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get recharge status.
 
         Required scopes: openid
@@ -169,21 +169,21 @@ class VolvoCarsApi:
             energy:charging_system_status energy:charging_current_limit
             energy:target_battery_level
         """
-        return await self._async_get_field(_API_ENERGY_ENDPOINT, "recharge-status")
+        return await self._async_get_field(_API_ENERGY_ENDPOINT, "recharge-status", vin)
 
-    async def async_get_statistics(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_statistics(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get statistics.
 
         Required scopes: openid conve:trip_statistics
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "statistics")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "statistics", vin)
 
-    async def async_get_tyre_states(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_tyre_states(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get tyre states.
 
         Required scopes: openid conve:tyre_status
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "tyres")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "tyres", vin)
 
     async def async_get_vehicles(self) -> list[str]:
         """Get vehicles.
@@ -195,7 +195,7 @@ class VolvoCarsApi:
         items = self._get_data_list(body)
         return [item["vin"] for item in items]
 
-    async def async_get_vehicle_details(self) -> VolvoCarsVehicle | None:
+    async def async_get_vehicle_details(self, vin: str = "") -> VolvoCarsVehicle | None:
         """Get vehicle details.
 
         Required scopes: openid conve:vehicle_relation
@@ -203,22 +203,22 @@ class VolvoCarsApi:
         data = await self._async_get_data_dict(_API_CONNECTED_ENDPOINT, "")
         return VolvoCarsVehicle.from_dict(data)
 
-    async def async_get_warnings(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_warnings(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get warnings.
 
         Required scopes: openid conve:warnings
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "warnings")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "warnings", vin)
 
-    async def async_get_window_states(self) -> dict[str, VolvoCarsValueField | None]:
+    async def async_get_window_states(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get window states.
 
         Required scopes: openid conve:windows_status
         """
-        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "windows")
+        return await self._async_get_field(_API_CONNECTED_ENDPOINT, "windows", vin)
 
     async def async_execute_command(
-        self, command: str, body: dict[str, Any] | None = None
+        self, command: str, body: dict[str, Any] | None = None, vin: str = ""
     ) -> VolvoCarsCommandResult | None:
         """Execute a command.
 
@@ -235,45 +235,48 @@ class VolvoCarsApi:
         - unlock: conve:unlock
         """
         body = await self._async_post(
-            _API_CONNECTED_ENDPOINT, f"commands/{command}", body
+            _API_CONNECTED_ENDPOINT, f"commands/{command}", body=body, vin=vin
         )
         data: dict = body.get("data", {})
         data["invoke_status"] = data.pop("invokeStatus", None)
         return VolvoCarsCommandResult.from_dict(data)
 
     async def _async_get_field(
-        self, endpoint: str, operation: str
+        self, endpoint: str, operation: str, vin: str = ""
     ) -> dict[str, VolvoCarsValueField | None]:
-        body = await self._async_get(endpoint, operation)
+        body = await self._async_get(endpoint, operation, vin)
         data: dict = body.get("data", {})
         return {
             key: VolvoCarsValueField.from_dict(value) for key, value in data.items()
         }
 
     async def _async_get_data_dict(
-        self, endpoint: str, operation: str
+        self, endpoint: str, operation: str, vin: str = ""
     ) -> dict[str, Any]:
-        body = await self._async_get(endpoint, operation)
+        body = await self._async_get(endpoint, operation, vin)
         return cast(dict[str, Any], body.get("data", {}))
 
-    async def _async_get(self, endpoint: str, operation: str) -> dict[str, Any]:
-        url = self._create_vin_url(endpoint, operation)
-        return await self._async_request(hdrs.METH_GET, url, operation=operation)
+    async def _async_get(self, endpoint: str, operation: str, vin: str = "") -> dict[str, Any]:
+        url = self._create_vin_url(endpoint, operation, vin)
+        return await self._async_request(hdrs.METH_GET, url, operation=operation, vin=vin)
 
     async def _async_post(
-        self, endpoint: str, operation: str, body: dict[str, Any] | None = None
+        self, endpoint: str, operation: str, *, body: dict[str, Any] | None = None, vin: str = ""
     ) -> dict[str, Any]:
-        url = self._create_vin_url(endpoint, operation)
-        return await self._async_request(hdrs.METH_POST, url, operation=operation, body=body)
+        url = self._create_vin_url(endpoint, operation, vin)
+        return await self._async_request(hdrs.METH_POST, url, operation=operation, body=body, vin=vin)
 
     def _get_data_list(self, body: dict[str, Any]) -> list[Any]:
         return cast(list[Any], body.get("data", []))
 
-    def _create_vin_url(self, endpoint: str, operation: str) -> str:
+    def _create_vin_url(self, endpoint: str, operation: str, vin: str = "") -> str:
+        if not vin:
+            vin = self.vin
+
         return (
-            f"{_API_URL}{endpoint}/{self._vin}/{operation}"
+            f"{_API_URL}{endpoint}/{vin}/{operation}"
             if operation
-            else f"{_API_URL}{endpoint}/{self._vin}"
+            else f"{_API_URL}{endpoint}/{vin}"
         )
 
     async def _async_request(
@@ -283,11 +286,12 @@ class VolvoCarsApi:
         *,
         operation: str,
         body: dict[str, Any] | None = None,
+        vin: str = "",
     ) -> dict[str, Any]:
         access_token = await self._token_manager.async_get_access_token()
         headers = {
             hdrs.AUTHORIZATION: f"Bearer {access_token}",
-            "vcc-api-key": self._api_key,
+            "vcc-api-key": self.api_key,
         }
 
         if method == hdrs.METH_POST:
@@ -300,7 +304,7 @@ class VolvoCarsApi:
                 "Request [%s]: %s %s",
                 operation,
                 method,
-                redact_url(url, self._vin),
+                redact_url(url, vin),
             )
             async with self._client.request(
                 method, url, headers=headers, json=body, timeout=_API_REQUEST_TIMEOUT
@@ -324,13 +328,13 @@ class VolvoCarsApi:
             if ex.status == 422 and "/commands" in url:
                 return {
                     "data": {
-                        "vin": self._vin,
+                        "vin": vin,
                         "invokeStatus": "UNKNOWN",
                         "message": "",
                     }
                 }
 
-            redacted_exception = RedactedClientResponseError(ex, self._vin)
+            redacted_exception = RedactedClientResponseError(ex, vin)
             message = redacted_exception.message
 
             if data and (error_data := data.get("error")):
