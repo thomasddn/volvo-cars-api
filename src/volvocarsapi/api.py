@@ -200,7 +200,7 @@ class VolvoCarsApi:
 
         Required scopes: openid conve:vehicle_relation
         """
-        data = await self._async_get_data_dict(_API_CONNECTED_ENDPOINT, "")
+        data = await self._async_get_data_dict(_API_CONNECTED_ENDPOINT, "", vin)
         return VolvoCarsVehicle.from_dict(data)
 
     async def async_get_warnings(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:

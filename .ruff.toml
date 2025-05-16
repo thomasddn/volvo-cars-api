@@ -164,12 +164,12 @@ split-on-trailing-comma = false
 # Allow for main entry & scripts to write to stdout
 "scripts/*" = ["T20"]
 
-# Allow relative imports within auth and within components
+# Allow relative imports
 "src/**" = ["TID252"]
 "tests/**" = ["TID252"]
 
 # Temporary
-"tests/**" = ["PTH"]
+#"tests/**" = ["PTH"]
 
 [lint.mccabe]
 max-complexity = 25

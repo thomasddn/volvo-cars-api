@@ -2,7 +2,10 @@
 
 from enum import StrEnum
 
+
 class RestrictedScope(StrEnum):
+    """Privacy and security related scopes."""
+
     LOCK = "conve:lock"
     UNLOCK = "conve:unlock"
     ENGINE_START_STOP = "conve:engine_start_stop"
