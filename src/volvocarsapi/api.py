@@ -23,12 +23,14 @@ from .models import (
     VolvoCarsLocation,
     VolvoCarsValue,
     VolvoCarsValueField,
+    VolvoCarsValueStatusField,
     VolvoCarsVehicle,
 )
 from .util import redact_data, redact_url
 
 _API_CONNECTED_ENDPOINT = "/connected-vehicle/v2/vehicles"
 _API_ENERGY_ENDPOINT = "/energy/v1/vehicles"
+_API_ENERGY_V2_ENDPOINT = "/energy/v2/vehicles"
 _API_LOCATION_ENDPOINT = "/location/v1/vehicles"
 _API_URL = "https://api.volvocars.com"
 _API_STATUS_URL = "https://public-developer-portal-bff.weu-prod.ecpaz.volvocars.biz/api/v1/backend-status"
@@ -121,6 +123,23 @@ class VolvoCarsApi:
         Required scopes: openid conve:doors_status conve:lock_status
         """
         return await self._async_get_field(_API_CONNECTED_ENDPOINT, "doors", vin)
+
+    async def async_get_energy_capabilities(self, vin: str = "") -> dict[str, Any]:
+        """Get energy state.
+
+        Required scopes: openid energy:capability:read
+        """
+        return await self._async_get_data_dict(_API_ENERGY_V2_ENDPOINT, "capabilities", vin, data_key="getEnergyState")
+
+    async def async_get_energy_state(self, vin: str = "") -> dict[str, VolvoCarsValueStatusField | None]:
+        """Get energy state.
+
+        Required scopes: openid energy:state:read
+        """
+        body = await self._async_get(_API_ENERGY_V2_ENDPOINT, "state", vin)
+        return {
+            key: VolvoCarsValueStatusField.from_dict(value) for key, value in body.items()
+        }
 
     async def async_get_engine_status(self, vin: str = "") -> dict[str, VolvoCarsValueField | None]:
         """Get engine status.
@@ -251,10 +270,10 @@ class VolvoCarsApi:
         }
 
     async def _async_get_data_dict(
-        self, endpoint: str, operation: str, vin: str = ""
+        self, endpoint: str, operation: str, vin: str = "", *, data_key: str = "data"
     ) -> dict[str, Any]:
         body = await self._async_get(endpoint, operation, vin)
-        return cast(dict[str, Any], body.get("data", {}))
+        return cast(dict[str, Any], body.get(data_key, {}))
 
     async def _async_get(self, endpoint: str, operation: str, vin: str = "") -> dict[str, Any]:
         url = self._create_vin_url(endpoint, operation, vin)

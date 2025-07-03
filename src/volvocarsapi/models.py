@@ -43,9 +43,9 @@ class VolvoCarsApiBaseModel:
                 ):
                     # Recursive call for nested dataclasses
                     class_data[key] = param_type.from_dict(value)
-                elif key == "timestamp" and isinstance(value, str):
+                elif key in ("timestamp", "updatedAt") and isinstance(value, str):
                     if value:
-                        class_data[key] = datetime.fromisoformat(value)
+                        class_data["timestamp"] = datetime.fromisoformat(value)
                 else:
                     class_data[key] = value
             else:
@@ -114,6 +114,14 @@ class VolvoCarsValueField(VolvoCarsValue):
 
     timestamp: datetime | None = None
     unit: str | None = None
+
+
+@dataclass
+class VolvoCarsValueStatusField(VolvoCarsValueField):
+    """API value and status field model."""
+
+    value: Any = None
+    status: str | None = None
 
 
 @dataclass

@@ -31,6 +31,11 @@ DEFAULT_SCOPES = [
     "conve:vehicle_relation",
     "conve:warnings",
     "conve:windows_status",
+    "energy:capability:read",
+    "energy:state:read"
+]
+
+DEPRECATED_SCOPES = [
     "energy:battery_charge_level",
     "energy:charging_connection_status",
     "energy:charging_current_limit",
