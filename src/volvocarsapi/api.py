@@ -1,5 +1,6 @@
 """Volvo Cars API."""
 
+from http import HTTPStatus
 import logging
 from typing import Any, cast
 
@@ -260,6 +261,26 @@ class VolvoCarsApi:
         data["invoke_status"] = data.pop("invokeStatus", None)
         return VolvoCarsCommandResult.from_dict(data)
 
+    async def async_get_access_token(self) -> str:
+        """Get or refresh the access token."""
+        operation = "token refresh"
+        try:
+            _LOGGER.debug("Request [%s]", operation)
+            return await self._token_manager.async_get_access_token()
+        except ClientResponseError as ex:
+            _LOGGER.debug("Request [%s] error: %s", operation, ex.message)
+
+            # Volvo returns a 400 for a stale refresh token. In such cases we also
+            # want to raise a VolvoAuthException.
+            if ex.status in (HTTPStatus.BAD_REQUEST, HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+                raise VolvoAuthException(ex.message, operation) from ex
+
+            raise VolvoApiException(ex.message, operation) from ex
+        except (ClientError, TimeoutError) as ex:
+            _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)
+            raise VolvoApiException(ex.__class__.__name__, operation) from ex
+
+
     async def _async_get_field(
         self, endpoint: str, operation: str, vin: str = ""
     ) -> dict[str, VolvoCarsValueField | None]:
@@ -307,7 +328,8 @@ class VolvoCarsApi:
         body: dict[str, Any] | None = None,
         vin: str = "",
     ) -> dict[str, Any]:
-        access_token = await self._token_manager.async_get_access_token()
+        access_token = await self.async_get_access_token()
+
         headers = {
             hdrs.AUTHORIZATION: f"Bearer {access_token}",
             "vcc-api-key": self.api_key,
@@ -339,12 +361,12 @@ class VolvoCarsApi:
                 response.raise_for_status()
                 return data
         except ClientResponseError as ex:
-            if ex.status == 404:
+            if ex.status == HTTPStatus.NOT_FOUND:
                 return {}
 
             _LOGGER.debug("Request [%s] error: %s", operation, ex.message)
 
-            if ex.status == 422 and "/commands" in url:
+            if ex.status == HTTPStatus.UNPROCESSABLE_ENTITY and "/commands" in url:
                 return {
                     "data": {
                         "vin": vin,
@@ -362,7 +384,7 @@ class VolvoCarsApi:
                 if error is not None:
                     message = f"{error.message} {error.description}".strip()
 
-            if ex.status in (401, 403):
+            if ex.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
                 raise VolvoAuthException(message, operation) from redacted_exception
 
             raise VolvoApiException(message, operation) from redacted_exception
