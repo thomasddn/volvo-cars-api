@@ -1,0 +1,40 @@
+FROM mcr.microsoft.com/devcontainers/python:1-3.13
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Uninstall pre-installed formatting and linting tools
+# They would conflict with our pinned versions
+RUN \
+    pipx uninstall pydocstyle \
+    && pipx uninstall pycodestyle \
+    && pipx uninstall mypy \
+    && pipx uninstall pylint
+
+RUN \
+    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
+    && apt-get update \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv
+RUN pip3 install uv
+
+WORKDIR /usr/src
+
+USER vscode
+ENV VIRTUAL_ENV="/home/vscode/.local/vca-venv"
+RUN uv venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+WORKDIR /tmp
+
+# Install Python dependencies from requirements
+COPY requirements.txt requirements.dev.txt ./
+RUN \
+    uv pip install -r requirements.txt && \
+    uv pip install -r requirements.dev.txt
+
+WORKDIR /workspaces
+
+# Set the default shell to bash instead of sh
+ENV SHELL=/bin/bash

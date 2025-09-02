@@ -1,0 +1,39 @@
+{
+  "name": "Volvo Cars API",
+  "context": "..",
+  "dockerFile": "../Dockerfile.dev",
+  "postCreateCommand": "scripts/setup.sh",
+  "containerEnv": {
+    "PYTHONASYNCIODEBUG": "1"
+  },
+  "runArgs": ["-e", "GIT_EDITOR=code --wait"],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.pylint",
+        "ms-python.vscode-pylance",
+        "visualstudioexptteam.vscodeintellicode",
+        "redhat.vscode-yaml",
+        "esbenp.prettier-vscode",
+        "GitHub.copilot"
+      ],
+      // Please keep this file in sync with settings in .vscode/settings.json
+      "settings": {
+        "python.experiments.optOutFrom": ["pythonTestAdapter"],
+        "python.defaultInterpreterPath": "/home/vscode/.local/vca-venv/bin/python",
+        "python.pythonPath": "/home/vscode/.local/vca-venv/bin/python",
+        "python.terminal.activateEnvInCurrentTerminal": true,
+        "python.testing.pytestArgs": ["tests"],
+        "pylint.importStrategy": "fromEnvironment",
+        "editor.formatOnPaste": false,
+        "editor.formatOnSave": true,
+        "editor.formatOnType": true,
+        "files.trimTrailingWhitespace": true,
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff"
+        }
+      }
+    }
+  }
+}
