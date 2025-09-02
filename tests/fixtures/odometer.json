@@ -1,0 +1,9 @@
+{
+    "data": {
+        "odometer": {
+            "value": 30000,
+            "unit": "km",
+            "timestamp": "2024-12-30T14:18:56.000Z"
+        }
+    }
+}
