@@ -300,7 +300,6 @@ class VolvoCarsApi:
         """Get or refresh the access token."""
         operation = "token refresh"
         try:
-            _LOGGER.debug("Request [%s]", operation)
             return await self._token_manager.async_get_access_token()
         except ClientResponseError as ex:
             _LOGGER.debug("Request [%s] error: %s", operation, ex.message)
