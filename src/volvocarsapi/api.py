@@ -376,6 +376,7 @@ class VolvoCarsApi:
         body: dict[str, Any] | None = None,
         vin: str = "",
     ) -> dict[str, Any]:
+        vin = vin or self.vin
         access_token = await self.async_get_access_token()
 
         headers = {

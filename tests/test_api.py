@@ -1,6 +1,7 @@
 """API tests."""
 
 from datetime import UTC, datetime
+import logging
 from unittest.mock import AsyncMock
 
 from aiohttp import ClientResponseError, ClientSession, RequestInfo
@@ -115,6 +116,22 @@ async def test_access_token_raises_api_exception(
 
     with pytest.raises(VolvoApiException):
         await api.async_get_access_token()
+
+
+async def test_redacted_url(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Test if request url is redacted in logs."""
+    odometer_json = load_json_fixture("odometer")
+    _mock_response(mock_client_session, odometer_json)
+
+    vin = "YV1ABCDEFG1234567"
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey", vin)
+
+    with caplog.at_level(logging.DEBUG):
+        await api.async_get_odometer()
+        assert "Request [odometer]:" in caplog.text
+        assert vin not in caplog.text
 
 
 def _mock_response(mock_client_session: ClientSession, json: dict) -> None:
