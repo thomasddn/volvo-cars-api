@@ -11,12 +11,11 @@
     "vscode": {
       "extensions": [
         "charliermarsh.ruff",
+        "github.copilot-chat",
         "ms-python.pylint",
         "ms-python.vscode-pylance",
-        "visualstudioexptteam.vscodeintellicode",
         "redhat.vscode-yaml",
-        "esbenp.prettier-vscode",
-        "GitHub.copilot"
+        "esbenp.prettier-vscode"
       ],
       // Please keep this file in sync with settings in .vscode/settings.json
       "settings": {

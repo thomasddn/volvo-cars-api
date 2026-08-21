@@ -6,7 +6,7 @@
         {
             "label": "Activate virtual environment",
             "type": "shell",
-            "command": "source .venv/bin/activate"
+            "command": "source /home/vscode/.local/vca-venv/bin/activate"
         },
         {
             "label": "Build package",
