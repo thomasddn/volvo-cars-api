@@ -1,6 +1,6 @@
 """Tests for Volvo Cars API models."""
 
-from volvocarsapi.models import VolvoCarsValue, VolvoCarsVehicle
+from volvocarsapi.models import VolvoCarsImages, VolvoCarsValue, VolvoCarsVehicle
 
 
 def test_from_dict_returns_none_when_data_is_none() -> None:
@@ -41,6 +41,5 @@ def test_from_dict_nested_model_with_null_value() -> None:
 
 def test_from_dict_none_on_nested_model_class() -> None:
     """from_dict on a nested model class also returns None when data is None."""
-    from volvocarsapi.models import VolvoCarsImages
 
     assert VolvoCarsImages.from_dict(None) is None

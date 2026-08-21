@@ -220,7 +220,7 @@ class VolvoCarsAuth(AccessTokenManager):
                 _LOGGER.debug("Request [%s] status: %s", operation, response.status)
 
                 json = await response.json()
-                data = cast(dict[str, Any], json)
+                data = cast("dict[str, Any]", json)
 
                 _LOGGER.debug(
                     "Request [%s] response: %s",

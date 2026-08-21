@@ -73,7 +73,7 @@ class VolvoCarsApi:
                 _LOGGER.debug("Request [API status] status: %s", response.status)
                 response.raise_for_status()
                 json = await response.json()
-                data = cast(dict[str, Any], json)
+                data = cast("dict[str, Any]", json)
                 _LOGGER.debug("Request [API status] response: %s", data)
 
                 message = data.get("message") or "OK"
@@ -331,7 +331,7 @@ class VolvoCarsApi:
         self, endpoint: str, operation: str, vin: str = "", *, data_key: str = "data"
     ) -> dict[str, Any]:
         body = await self._async_get(endpoint, operation, vin)
-        return cast(dict[str, Any], body.get(data_key, {}))
+        return cast("dict[str, Any]", body.get(data_key, {}))
 
     async def _async_get(
         self, endpoint: str, operation: str, vin: str = ""
@@ -355,7 +355,7 @@ class VolvoCarsApi:
         )
 
     def _get_data_list(self, body: dict[str, Any]) -> list[Any]:
-        return cast(list[Any], body.get("data", []))
+        return cast("list[Any]", body.get("data", []))
 
     def _create_vin_url(self, endpoint: str, operation: str, vin: str = "") -> str:
         if not vin:
@@ -401,7 +401,7 @@ class VolvoCarsApi:
             ) as response:
                 _LOGGER.debug("Request [%s] status: %s", operation, response.status)
                 json = await response.json()
-                data = cast(dict[str, Any], json)
+                data = cast("dict[str, Any]", json)
                 _LOGGER.debug(
                     "Request [%s] response: %s",
                     operation,
