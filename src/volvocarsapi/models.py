@@ -24,8 +24,11 @@ class VolvoCarsApiBaseModel:
     extra_data: dict[str, Any] = field(default_factory=dict[str, Any])
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> Self | None:
+    def from_dict(cls, data: dict[str, Any] | None) -> Self | None:
         """Create instance from json dict."""
+        if data is None:
+            return None
+
         parameters = inspect.signature(cls).parameters
         class_data: dict[str, Any] = {}
         extra_data: dict[str, Any] = {}
