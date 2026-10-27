@@ -62,6 +62,7 @@ class VolvoCarsApi:
         self._token_manager = token_manager
         self.api_key = api_key
         self.vin = vin
+        self._empty_post_body: dict[str, Any] | None = None
 
     async def async_get_api_status(self) -> dict[str, VolvoCarsValue]:
         """Check the API status."""
@@ -311,9 +312,11 @@ class VolvoCarsApi:
                 HTTPStatus.UNAUTHORIZED,
                 HTTPStatus.FORBIDDEN,
             ):
-                raise VolvoAuthException(ex.message, operation) from ex
+                raise VolvoAuthException(
+                    ex.message, operation, status=ex.status
+                ) from ex
 
-            raise VolvoApiException(ex.message, operation) from ex
+            raise VolvoApiException(ex.message, operation, status=ex.status) from ex
         except (ClientError, TimeoutError) as ex:
             _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)
             raise VolvoApiException(ex.__class__.__name__, operation) from ex
@@ -350,9 +353,40 @@ class VolvoCarsApi:
         vin: str = "",
     ) -> dict[str, Any]:
         url = self._create_vin_url(endpoint, operation, vin)
-        return await self._async_request(
-            hdrs.METH_POST, url, operation=operation, body=body, vin=vin
-        )
+
+        if body is not None:
+            return await self._async_request(
+                hdrs.METH_POST, url, operation=operation, body=body, vin=vin
+            )
+
+        # The API documentation states that body-less POSTs (e.g. commands) should
+        # be sent without a body, but the API has been observed rejecting this with
+        # a 415 while accepting `{}` (and possibly vice versa in the future).
+        # Start with the variant that last succeeded and fall back to the other one
+        # on a 415.
+        preferred = self._empty_post_body
+        alternative: dict[str, Any] | None = {} if preferred is None else None
+
+        try:
+            data = await self._async_request(
+                hdrs.METH_POST, url, operation=operation, body=preferred, vin=vin
+            )
+        except VolvoApiException as ex:
+            if ex.status != HTTPStatus.UNSUPPORTED_MEDIA_TYPE:
+                raise
+
+            _LOGGER.debug(
+                "Request [%s] rejected with body %s, retrying with body %s",
+                operation,
+                preferred,
+                alternative,
+            )
+            data = await self._async_request(
+                hdrs.METH_POST, url, operation=operation, body=alternative, vin=vin
+            )
+            self._empty_post_body = alternative
+
+        return data
 
     def _get_data_list(self, body: dict[str, Any]) -> list[Any]:
         return cast("list[Any]", body.get("data", []))
@@ -434,9 +468,13 @@ class VolvoCarsApi:
                     message = f"{error.message} {error.description}".strip()
 
             if ex.status in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
-                raise VolvoAuthException(message, operation) from redacted_exception
+                raise VolvoAuthException(
+                    message, operation, status=ex.status
+                ) from redacted_exception
 
-            raise VolvoApiException(message, operation) from redacted_exception
+            raise VolvoApiException(
+                message, operation, status=ex.status
+            ) from redacted_exception
 
         except (ClientError, TimeoutError) as ex:
             _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)

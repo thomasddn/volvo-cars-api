@@ -191,10 +191,13 @@ class VolvoCarsErrorResult(VolvoCarsApiBaseModel):
 class VolvoApiException(Exception):
     """Thrown when an API request fails."""
 
-    def __init__(self, message: str = "", operation: str = "") -> None:
+    def __init__(
+        self, message: str = "", operation: str = "", *, status: int | None = None
+    ) -> None:
         """Initialize exception."""
         self.message = message
         self.operation = operation
+        self.status = status
 
 
 class VolvoAuthException(VolvoApiException):

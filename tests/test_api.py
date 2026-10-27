@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 import logging
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 from aiohttp import ClientResponseError, ClientSession, RequestInfo
 import pytest
@@ -70,6 +70,32 @@ async def test_get_odometer_auth_failure(
         await api.async_get_odometer()
 
 
+@pytest.mark.parametrize(
+    ("status", "exception"),
+    [
+        (401, VolvoAuthException),
+        (403, VolvoAuthException),
+        (415, VolvoApiException),
+        (500, VolvoApiException),
+    ],
+)
+async def test_failure_exposes_status(
+    mock_client_session: ClientSession,
+    mock_token_manager: VolvoCarsAuth,
+    status: int,
+    exception: type[VolvoApiException],
+) -> None:
+    """Test the HTTP status is exposed on the raised exception."""
+    _mock_response_failure(mock_client_session, status)
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    with pytest.raises(exception) as exc_info:
+        await api.async_execute_command("flash")
+
+    assert exc_info.value.status == status
+
+
 async def test_access_token_successful(
     mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
 ) -> None:
@@ -95,8 +121,10 @@ async def test_access_token_raises_auth_exception(
 
     api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
 
-    with pytest.raises(VolvoAuthException):
+    with pytest.raises(VolvoAuthException) as exc_info:
         await api.async_get_access_token()
+
+    assert exc_info.value.status == status
 
 
 @pytest.mark.parametrize(
@@ -114,12 +142,17 @@ async def test_access_token_raises_api_exception(
 
     api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
 
-    with pytest.raises(VolvoApiException):
+    with pytest.raises(VolvoApiException) as exc_info:
         await api.async_get_access_token()
+
+    assert not isinstance(exc_info.value, VolvoAuthException)
+    assert exc_info.value.status == status
 
 
 async def test_redacted_url(
-    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth, caplog: pytest.LogCaptureFixture
+    mock_client_session: ClientSession,
+    mock_token_manager: VolvoCarsAuth,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     """Test if request url is redacted in logs."""
     odometer_json = load_json_fixture("odometer")
@@ -134,10 +167,109 @@ async def test_redacted_url(
         assert vin not in caplog.text
 
 
+async def test_execute_command_sends_no_body(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test command is sent without body by default."""
+    _mock_response(mock_client_session, _command_json())
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    result = await api.async_execute_command("flash")
+    assert result is not None
+    assert result.invoke_status == "COMPLETED"
+    assert _sent_bodies(mock_client_session) == [None]
+
+
+async def test_execute_command_falls_back_to_empty_object_on_415(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test command is retried with `{}` on 415 and remembers it."""
+    mock_client_session.request.side_effect = [
+        _create_response_error(415),
+        _create_response(_command_json()),
+        _create_response(_command_json()),
+    ]
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    result = await api.async_execute_command("flash")
+    assert result is not None
+    assert result.invoke_status == "COMPLETED"
+
+    await api.async_execute_command("honk")
+    assert _sent_bodies(mock_client_session) == [None, {}, {}]
+
+
+async def test_execute_command_switches_back_to_no_body_on_415(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test command switches back to no body when `{}` starts failing."""
+    mock_client_session.request.side_effect = [
+        _create_response_error(415),
+        _create_response(_command_json()),
+        _create_response_error(415),
+        _create_response(_command_json()),
+        _create_response(_command_json()),
+    ]
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    await api.async_execute_command("flash")
+    await api.async_execute_command("flash")
+    await api.async_execute_command("flash")
+    assert _sent_bodies(mock_client_session) == [None, {}, {}, None, None]
+
+
+async def test_execute_command_raises_when_both_variants_fail(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test command raises when both body variants are rejected."""
+    mock_client_session.request.side_effect = [
+        _create_response_error(415),
+        _create_response_error(415),
+    ]
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    with pytest.raises(VolvoApiException) as exc_info:
+        await api.async_execute_command("flash")
+
+    assert exc_info.value.status == 415
+    assert _sent_bodies(mock_client_session) == [None, {}]
+
+
+async def test_execute_command_does_not_retry_other_errors(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test command is not retried on errors other than 415."""
+    mock_client_session.request.side_effect = [_create_response_error(500)]
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    with pytest.raises(VolvoApiException):
+        await api.async_execute_command("flash")
+
+    assert _sent_bodies(mock_client_session) == [None]
+
+
+async def test_execute_command_with_body_does_not_retry(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test command with explicit body is not retried on 415."""
+    mock_client_session.request.side_effect = [_create_response_error(415)]
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    with pytest.raises(VolvoApiException) as exc_info:
+        await api.async_execute_command("climatization-start", {"foo": "bar"})
+
+    assert exc_info.value.status == 415
+    assert _sent_bodies(mock_client_session) == [{"foo": "bar"}]
+
+
 def _mock_response(mock_client_session: ClientSession, json: dict) -> None:
-    mock_response = AsyncMock()
-    mock_response.__aenter__.return_value.json = AsyncMock(return_value=json)
-    mock_client_session.request.return_value = mock_response
+    mock_client_session.request.return_value = _create_response(json)
 
 
 def _mock_response_failure(mock_client_session: ClientSession, status: int) -> None:
@@ -146,3 +278,30 @@ def _mock_response_failure(mock_client_session: ClientSession, status: int) -> N
         None,
         status=status,
     )
+
+
+def _create_response(json: dict) -> AsyncMock:
+    response = MagicMock()
+    response.json = AsyncMock(return_value=json)
+
+    mock_response = AsyncMock()
+    mock_response.__aenter__.return_value = response
+    return mock_response
+
+
+def _create_response_error(status: int) -> ClientResponseError:
+    return ClientResponseError(
+        RequestInfo(url="http://127.0.0.1", method="POST", headers={}),
+        None,
+        status=status,
+    )
+
+
+def _command_json() -> dict:
+    return {
+        "data": {"vin": "YV1ABCDEFG1234567", "invokeStatus": "COMPLETED", "message": ""}
+    }
+
+
+def _sent_bodies(mock_client_session: ClientSession) -> list:
+    return [c.kwargs["json"] for c in mock_client_session.request.call_args_list]

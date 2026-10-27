@@ -9,7 +9,7 @@ import secrets
 import time
 from typing import Any, cast
 
-from aiohttp import ClientError, ClientSession, ClientTimeout, hdrs
+from aiohttp import ClientError, ClientResponseError, ClientSession, ClientTimeout, hdrs
 from yarl import URL
 
 from .models import TokenResponse, VolvoApiException, VolvoAuthException
@@ -233,7 +233,10 @@ class VolvoCarsAuth(AccessTokenManager):
 
         except ClientError as ex:
             _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)
-            raise VolvoAuthException(ex.__class__.__name__, operation) from ex
+            status = ex.status if isinstance(ex, ClientResponseError) else None
+            raise VolvoAuthException(
+                ex.__class__.__name__, operation, status=status
+            ) from ex
         except TimeoutError as ex:
             _LOGGER.debug("Request [%s] error: %s", operation, ex.__class__.__name__)
             raise VolvoApiException(ex.__class__.__name__, operation) from ex

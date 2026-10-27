@@ -33,7 +33,7 @@ scopes = [
 ]
 
 # Must be excactly as entered during the API application registration
-redirect_uri = "htttps://my-volvo-application.io/callback" 
+redirect_uri = "htttps://my-volvo-application.io/callback"
 
 # The VCC API key retrieved after the API application registration process
 api_key = "abcdef-1234567890-abcdef"
@@ -70,7 +70,7 @@ engine_warnings = await api.async_get_engine_warnings()
 
 ## 🚗 Powered by dreams
 
-If you'd like to show your appreciation for this project, feel free to toss a coin to your dev. Donations help keep things running — and who knows, maybe one day they'll add up to a Volvo EX90 (hey, let me dream!). If you're feeling generous, you may donate one too — I'll even come pick it up! 😁
+If you'd like to show your appreciation for this project, feel free to toss a coin to your dev. Donations help keep things running, and who knows, maybe one day they'll add up to a Volvo EX90 (hey, let me dream!). If you're feeling generous, you may donate one too. I'll even come pick it up! 😁
 
 [![ko-fi sponsor][kofi-sponsor-shield]][kofi-sponsor]
 [![github sponsor][github-sponsor-shield]][github-sponsor]
