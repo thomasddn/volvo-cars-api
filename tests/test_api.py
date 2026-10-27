@@ -9,7 +9,11 @@ import pytest
 
 from volvocarsapi.api import VolvoCarsApi
 from volvocarsapi.auth import VolvoCarsAuth
-from volvocarsapi.models import VolvoApiException, VolvoAuthException
+from volvocarsapi.models import (
+    VolvoApiException,
+    VolvoAuthException,
+    VolvoCarsCommandResult,
+)
 
 from . import configure_mock, load_json_fixture
 
@@ -266,6 +270,59 @@ async def test_execute_command_with_body_does_not_retry(
 
     assert exc_info.value.status == 415
     assert _sent_bodies(mock_client_session) == [{"foo": "bar"}]
+
+
+@pytest.mark.parametrize("body", [None, {"foo": "bar"}])
+async def test_execute_command_returns_unknown_on_422(
+    mock_client_session: ClientSession,
+    mock_token_manager: VolvoCarsAuth,
+    body: dict | None,
+) -> None:
+    """Test command returns an `UNKNOWN` result on 422."""
+    mock_client_session.request.side_effect = [_create_response_error(422)]
+
+    vin = "YV1ABCDEFG1234567"
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey", vin)
+
+    result = await api.async_execute_command("flash", body)
+    assert result == VolvoCarsCommandResult(
+        vin=vin, invoke_status="UNKNOWN", message=""
+    )
+    assert _sent_bodies(mock_client_session) == [body]
+
+
+async def test_execute_command_remembers_fallback_body_on_422(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test a 422 on the `{}` retry still remembers `{}` as working body."""
+    mock_client_session.request.side_effect = [
+        _create_response_error(415),
+        _create_response_error(422),
+        _create_response(_command_json()),
+    ]
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    result = await api.async_execute_command("flash")
+    assert result is not None
+    assert result.invoke_status == "UNKNOWN"
+
+    await api.async_execute_command("flash")
+    assert _sent_bodies(mock_client_session) == [None, {}, {}]
+
+
+async def test_get_commands_raises_on_422(
+    mock_client_session: ClientSession, mock_token_manager: VolvoCarsAuth
+) -> None:
+    """Test 422 on non-command-execution requests is raised."""
+    _mock_response_failure(mock_client_session, 422)
+
+    api = VolvoCarsApi(mock_client_session, mock_token_manager, "secretapikey")
+
+    with pytest.raises(VolvoApiException) as exc_info:
+        await api.async_get_commands()
+
+    assert exc_info.value.status == 422
 
 
 def _mock_response(mock_client_session: ClientSession, json: dict) -> None:

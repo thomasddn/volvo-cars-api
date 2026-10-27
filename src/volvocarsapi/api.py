@@ -290,9 +290,19 @@ class VolvoCarsApi:
         - lock-reduced-guard: conve:lock
         - unlock: conve:unlock
         """
-        body = await self._async_post(
-            _API_CONNECTED_ENDPOINT, f"commands/{command}", body=body, vin=vin
-        )
+        try:
+            body = await self._async_post(
+                _API_CONNECTED_ENDPOINT, f"commands/{command}", body=body, vin=vin
+            )
+        except VolvoApiException as ex:
+            if ex.status != HTTPStatus.UNPROCESSABLE_ENTITY:
+                raise
+
+            # The API rejected the command itself; its outcome is unknown.
+            return VolvoCarsCommandResult(
+                vin=vin or self.vin, invoke_status="UNKNOWN", message=""
+            )
+
         data: dict = body.get("data", {})
         data["invoke_status"] = data.pop("invokeStatus", None)
         return VolvoCarsCommandResult.from_dict(data)
@@ -368,24 +378,31 @@ class VolvoCarsApi:
         alternative: dict[str, Any] | None = {} if preferred is None else None
 
         try:
-            data = await self._async_request(
+            return await self._async_request(
                 hdrs.METH_POST, url, operation=operation, body=preferred, vin=vin
             )
         except VolvoApiException as ex:
             if ex.status != HTTPStatus.UNSUPPORTED_MEDIA_TYPE:
                 raise
 
-            _LOGGER.debug(
-                "Request [%s] rejected with body %s, retrying with body %s",
-                operation,
-                preferred,
-                alternative,
-            )
+        _LOGGER.debug(
+            "Request [%s] rejected with body %s, retrying with body %s",
+            operation,
+            preferred,
+            alternative,
+        )
+
+        try:
             data = await self._async_request(
                 hdrs.METH_POST, url, operation=operation, body=alternative, vin=vin
             )
-            self._empty_post_body = alternative
+        except VolvoApiException as ex:
+            # A 422 means the body format was accepted, so remember it anyway.
+            if ex.status == HTTPStatus.UNPROCESSABLE_ENTITY:
+                self._empty_post_body = alternative
+            raise
 
+        self._empty_post_body = alternative
         return data
 
     def _get_data_list(self, body: dict[str, Any]) -> list[Any]:
@@ -448,15 +465,6 @@ class VolvoCarsApi:
                 return {}
 
             _LOGGER.debug("Request [%s] error: %s", operation, ex.message)
-
-            if ex.status == HTTPStatus.UNPROCESSABLE_ENTITY and "/commands" in url:
-                return {
-                    "data": {
-                        "vin": vin,
-                        "invokeStatus": "UNKNOWN",
-                        "message": "",
-                    }
-                }
 
             redacted_exception = RedactedClientResponseError(ex, vin)
             message = redacted_exception.message
