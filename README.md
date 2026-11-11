@@ -25,9 +25,9 @@ This library selects the authorization server based on the client id, so both ki
 
 When signing in on the new server, check **Remember me**. Without it, the refresh token expires together with the login session and you'll have to sign in again sooner.
 
-### Custom OAuth 2.0 flows
+### Endpoints and scopes
 
-If you implement the OAuth 2.0 flow yourself instead of using `VolvoCarsAuth`, use `get_volvoid_server` to get the correct endpoints and scopes for a client id:
+Use `get_volvoid_server` to get the correct endpoints and scopes for a client id. This is needed when you implement the OAuth 2.0 flow yourself instead of using `VolvoCarsAuth`, or to pick the scopes to pass to `VolvoCarsAuth`:
 
 ```py
 from volvocarsapi.auth import get_volvoid_server
@@ -39,7 +39,9 @@ server.default_scopes  # Scopes without restricted scopes
 server.all_scopes  # Scopes including restricted scopes
 ```
 
-The `AUTHORIZE_URL` and `TOKEN_URL` constants are deprecated. They keep pointing to the legacy server until the migration deadline has passed.
+To request a subset, combine the per-type scopes of the new server from `volvocarsapi.scopes`: `OPENID_SCOPES`, `CONVE_SCOPES`, `ENERGY_SCOPES`, `ENERGY_DEVICE_SCOPES` and `RestrictedScope`.
+
+The `AUTHORIZE_URL`, `TOKEN_URL`, `DEFAULT_SCOPES` and `ALL_SCOPES` constants are deprecated. They keep pointing to the legacy server until the migration deadline has passed. After that, they'll point to the new server.
 
 ## Usage
 

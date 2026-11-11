@@ -15,6 +15,7 @@ class RestrictedScope(StrEnum):
     WALLBOX_CONTROL = "energy_device:wallbox:control"
 
 
+# Scopes per type for the new Volvo ID system
 OPENID_SCOPES = ["openid"]
 
 # Connected Vehicle API scopes, excluding restricted scopes
@@ -53,19 +54,11 @@ ENERGY_DEVICE_SCOPES = [
     "energy_device:wallbox:read",
 ]
 
+# Deprecated: use `get_volvoid_server(client_id).default_scopes` and `.all_scopes`
+# from `volvocarsapi.auth` instead. These keep the legacy Volvo ID scopes (client IDs
+# starting with `dc-`) until the migration deadline has passed, so existing
+# applications don't request scopes they were never registered with.
 DEFAULT_SCOPES = [
-    *OPENID_SCOPES,
-    *CONVE_SCOPES,
-    *ENERGY_SCOPES,
-    *ENERGY_DEVICE_SCOPES,
-]
-
-ALL_SCOPES = DEFAULT_SCOPES + [s.value for s in RestrictedScope]
-
-# Scopes for the legacy Volvo ID system (client IDs starting with `dc-`). Frozen so
-# existing applications don't request scopes they were never registered with.
-# To be removed after the Volvo ID migration deadline.
-LEGACY_DEFAULT_SCOPES = [
     "openid",
     "conve:battery_charge_level",
     "conve:brake_status",
@@ -88,8 +81,8 @@ LEGACY_DEFAULT_SCOPES = [
     "energy:state:read",
 ]
 
-LEGACY_ALL_SCOPES = [
-    *LEGACY_DEFAULT_SCOPES,
+ALL_SCOPES = [
+    *DEFAULT_SCOPES,
     RestrictedScope.LOCK.value,
     RestrictedScope.UNLOCK.value,
     RestrictedScope.ENGINE_START_STOP.value,

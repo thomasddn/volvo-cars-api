@@ -28,8 +28,6 @@ from volvocarsapi.scopes import (
     DEFAULT_SCOPES,
     ENERGY_DEVICE_SCOPES,
     ENERGY_SCOPES,
-    LEGACY_ALL_SCOPES,
-    LEGACY_DEFAULT_SCOPES,
     OPENID_SCOPES,
     RestrictedScope,
 )
@@ -128,8 +126,6 @@ def test_servers() -> None:
     assert not VOLVOID_SERVER.legacy
     assert VOLVOID_SERVER.authorize_url.startswith("https://auth.volvocars.com/")
     assert VOLVOID_SERVER.token_url.startswith("https://auth.volvocars.com/")
-    assert VOLVOID_SERVER.default_scopes == tuple(DEFAULT_SCOPES)
-    assert VOLVOID_SERVER.all_scopes == tuple(ALL_SCOPES)
 
     assert LEGACY_VOLVOID_SERVER.legacy
     assert LEGACY_VOLVOID_SERVER.authorize_url.startswith(
@@ -138,36 +134,72 @@ def test_servers() -> None:
     assert LEGACY_VOLVOID_SERVER.token_url.startswith(
         "https://volvoid.eu.volvocars.com/"
     )
-    assert LEGACY_VOLVOID_SERVER.default_scopes == tuple(LEGACY_DEFAULT_SCOPES)
-    assert LEGACY_VOLVOID_SERVER.all_scopes == tuple(LEGACY_ALL_SCOPES)
 
 
-def test_deprecated_urls_point_to_legacy_server() -> None:
-    """Test deprecated URL constants are unchanged during the transition."""
+def test_deprecated_constants_point_to_legacy_server() -> None:
+    """Test deprecated constants are unchanged during the transition."""
     assert LEGACY_VOLVOID_SERVER.authorize_url == AUTHORIZE_URL
     assert LEGACY_VOLVOID_SERVER.token_url == TOKEN_URL
+    assert LEGACY_VOLVOID_SERVER.default_scopes == tuple(DEFAULT_SCOPES)
+    assert LEGACY_VOLVOID_SERVER.all_scopes == tuple(ALL_SCOPES)
 
 
 def test_scopes() -> None:
     """Test new and legacy scope sets."""
+    new_default_scopes = VOLVOID_SERVER.default_scopes
+    new_all_scopes = VOLVOID_SERVER.all_scopes
     wallbox_scopes = {RestrictedScope.WALLBOX_WRITE, RestrictedScope.WALLBOX_CONTROL}
 
-    assert wallbox_scopes <= set(ALL_SCOPES)
-    assert wallbox_scopes.isdisjoint(DEFAULT_SCOPES)
-    assert wallbox_scopes.isdisjoint(LEGACY_ALL_SCOPES)
+    assert wallbox_scopes <= set(new_all_scopes)
+    assert wallbox_scopes.isdisjoint(new_default_scopes)
+    assert wallbox_scopes.isdisjoint(ALL_SCOPES)
 
-    assert set(LEGACY_DEFAULT_SCOPES) <= set(DEFAULT_SCOPES)
-    assert set(LEGACY_ALL_SCOPES) <= set(ALL_SCOPES)
-    assert set(LEGACY_DEFAULT_SCOPES) <= set(LEGACY_ALL_SCOPES)
+    assert set(DEFAULT_SCOPES) <= set(new_default_scopes)
+    assert set(ALL_SCOPES) <= set(new_all_scopes)
+    assert set(DEFAULT_SCOPES) <= set(ALL_SCOPES)
 
     for scopes in (
+        new_default_scopes,
+        new_all_scopes,
         DEFAULT_SCOPES,
         ALL_SCOPES,
-        LEGACY_DEFAULT_SCOPES,
-        LEGACY_ALL_SCOPES,
     ):
         assert len(scopes) == len(set(scopes))
         assert "offline_access" not in scopes
+
+
+def test_scopes_are_backwards_compatible() -> None:
+    """Test the existing scope constants keep their legacy values."""
+    assert DEFAULT_SCOPES == [
+        "openid",
+        "conve:battery_charge_level",
+        "conve:brake_status",
+        "conve:climatization_start_stop",
+        "conve:command_accessibility",
+        "conve:commands",
+        "conve:diagnostics_engine_status",
+        "conve:diagnostics_workshop",
+        "conve:doors_status",
+        "conve:engine_status",
+        "conve:fuel_status",
+        "conve:lock_status",
+        "conve:odometer_status",
+        "conve:trip_statistics",
+        "conve:tyre_status",
+        "conve:vehicle_relation",
+        "conve:warnings",
+        "conve:windows_status",
+        "energy:capability:read",
+        "energy:state:read",
+    ]
+    assert [
+        *DEFAULT_SCOPES,
+        "conve:lock",
+        "conve:unlock",
+        "conve:engine_start_stop",
+        "conve:honk_flash",
+        "location:read",
+    ] == ALL_SCOPES
 
 
 def test_scopes_by_type() -> None:
@@ -181,13 +213,17 @@ def test_scopes_by_type() -> None:
     ]
     grouped = [scope for group in groups for scope in group]
 
-    assert sorted(grouped) == sorted(ALL_SCOPES)
-    assert [
+    assert sorted(grouped) == sorted(VOLVOID_SERVER.all_scopes)
+    assert VOLVOID_SERVER.default_scopes == (
         *OPENID_SCOPES,
         *CONVE_SCOPES,
         *ENERGY_SCOPES,
         *ENERGY_DEVICE_SCOPES,
-    ] == DEFAULT_SCOPES
+    )
+    assert VOLVOID_SERVER.all_scopes == (
+        *VOLVOID_SERVER.default_scopes,
+        *(s.value for s in RestrictedScope),
+    )
 
     for prefix, scopes in (
         ("conve:", CONVE_SCOPES),

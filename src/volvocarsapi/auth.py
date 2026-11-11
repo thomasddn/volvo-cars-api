@@ -15,7 +15,15 @@ from aiohttp import ClientError, ClientResponseError, ClientSession, ClientTimeo
 from yarl import URL
 
 from .models import TokenResponse, VolvoApiException, VolvoAuthException
-from .scopes import ALL_SCOPES, DEFAULT_SCOPES, LEGACY_ALL_SCOPES, LEGACY_DEFAULT_SCOPES
+from .scopes import (
+    ALL_SCOPES,
+    CONVE_SCOPES,
+    DEFAULT_SCOPES,
+    ENERGY_DEVICE_SCOPES,
+    ENERGY_SCOPES,
+    OPENID_SCOPES,
+    RestrictedScope,
+)
 from .util import redact_data
 
 
@@ -30,18 +38,25 @@ class VolvoIdServer:
     legacy: bool = False
 
 
+_DEFAULT_SCOPES = (
+    *OPENID_SCOPES,
+    *CONVE_SCOPES,
+    *ENERGY_SCOPES,
+    *ENERGY_DEVICE_SCOPES,
+)
+
 VOLVOID_SERVER = VolvoIdServer(
     authorize_url="https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/auth",
     token_url="https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/token",
-    default_scopes=tuple(DEFAULT_SCOPES),
-    all_scopes=tuple(ALL_SCOPES),
+    default_scopes=_DEFAULT_SCOPES,
+    all_scopes=(*_DEFAULT_SCOPES, *(s.value for s in RestrictedScope)),
 )
 
 LEGACY_VOLVOID_SERVER = VolvoIdServer(
     authorize_url="https://volvoid.eu.volvocars.com/as/authorization.oauth2",
     token_url="https://volvoid.eu.volvocars.com/as/token.oauth2",
-    default_scopes=tuple(LEGACY_DEFAULT_SCOPES),
-    all_scopes=tuple(LEGACY_ALL_SCOPES),
+    default_scopes=tuple(DEFAULT_SCOPES),
+    all_scopes=tuple(ALL_SCOPES),
     legacy=True,
 )
 
