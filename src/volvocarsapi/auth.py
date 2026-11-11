@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from asyncio import Lock
 import base64
+from dataclasses import dataclass
+from datetime import date
 import hashlib
 import logging
 import secrets
@@ -13,10 +15,44 @@ from aiohttp import ClientError, ClientResponseError, ClientSession, ClientTimeo
 from yarl import URL
 
 from .models import TokenResponse, VolvoApiException, VolvoAuthException
+from .scopes import ALL_SCOPES, DEFAULT_SCOPES, LEGACY_ALL_SCOPES, LEGACY_DEFAULT_SCOPES
 from .util import redact_data
 
-AUTHORIZE_URL = "https://volvoid.eu.volvocars.com/as/authorization.oauth2"
-TOKEN_URL = "https://volvoid.eu.volvocars.com/as/token.oauth2"
+
+@dataclass(frozen=True, slots=True)
+class VolvoIdServer:
+    """Volvo ID authorization server."""
+
+    authorize_url: str
+    token_url: str
+    default_scopes: tuple[str, ...]
+    all_scopes: tuple[str, ...]
+    legacy: bool = False
+
+
+VOLVOID_SERVER = VolvoIdServer(
+    authorize_url="https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/auth",
+    token_url="https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/token",
+    default_scopes=tuple(DEFAULT_SCOPES),
+    all_scopes=tuple(ALL_SCOPES),
+)
+
+LEGACY_VOLVOID_SERVER = VolvoIdServer(
+    authorize_url="https://volvoid.eu.volvocars.com/as/authorization.oauth2",
+    token_url="https://volvoid.eu.volvocars.com/as/token.oauth2",
+    default_scopes=tuple(LEGACY_DEFAULT_SCOPES),
+    all_scopes=tuple(LEGACY_ALL_SCOPES),
+    legacy=True,
+)
+
+LEGACY_CLIENT_ID_PREFIX = "dc-"
+VOLVOID_MIGRATION_DEADLINE = date(2027, 1, 31)
+VOLVOID_MIGRATION_URL = "https://developer.volvocars.com/news/volvoid-migration/"
+
+# Deprecated: use `get_volvoid_server(client_id)` instead. These keep pointing to the
+# legacy Volvo ID system until the migration deadline has passed.
+AUTHORIZE_URL = LEGACY_VOLVOID_SERVER.authorize_url
+TOKEN_URL = LEGACY_VOLVOID_SERVER.token_url
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,13 +61,47 @@ _CLOCK_OUT_OF_SYNC_MAX_SEC = 20
 _DATA_TO_REDACT = [
     "access_token",
     "code",
+    "email",
+    "family_name",
+    "given_name",
     "id",
     "id_token",
     "href",
+    "name",
+    "preferred_username",
     "refresh_token",
+    "session_state",
+    "sid",
     "target",
     "username",
 ]
+
+_legacy_warning_logged = False
+
+
+def is_legacy_client(client_id: str) -> bool:
+    """Return if the client ID belongs to the legacy Volvo ID system."""
+    return client_id.startswith(LEGACY_CLIENT_ID_PREFIX)
+
+
+def get_volvoid_server(client_id: str) -> VolvoIdServer:
+    """Return the Volvo ID authorization server for the given client ID."""
+    return LEGACY_VOLVOID_SERVER if is_legacy_client(client_id) else VOLVOID_SERVER
+
+
+def _warn_legacy_client() -> None:
+    global _legacy_warning_logged  # noqa: PLW0603
+
+    if _legacy_warning_logged:
+        return
+
+    _legacy_warning_logged = True
+    _LOGGER.warning(
+        "Your Volvo API application uses the legacy Volvo ID system, which stops "
+        "working after %s. Create a new application to migrate. See %s",
+        VOLVOID_MIGRATION_DEADLINE.isoformat(),
+        VOLVOID_MIGRATION_URL,
+    )
 
 
 def _generate_code_verifier(code_verifier_length: int = 128) -> str:
@@ -88,6 +158,10 @@ class VolvoCarsAuth(AccessTokenManager):
         self._client_secret = client_secret
         self._scopes = scopes
         self._redirect_uri = redirect_uri
+        self._server = get_volvoid_server(client_id)
+
+        if self._server.legacy:
+            _warn_legacy_client()
 
         self._code_verifier = _generate_code_verifier(code_verifier_length)
 
@@ -96,8 +170,13 @@ class VolvoCarsAuth(AccessTokenManager):
             credentials.encode("utf-8")
         ).decode("utf-8")
 
-        self._token: TokenResponse
+        self._token: TokenResponse | None = None
         self._token_lock = Lock()
+
+    @property
+    def server(self) -> VolvoIdServer:
+        """Get the Volvo ID authorization server used by this client."""
+        return self._server
 
     @property
     def token(self) -> TokenResponse | None:
@@ -116,7 +195,7 @@ class VolvoCarsAuth(AccessTokenManager):
     async def async_get_access_token(self) -> str:
         """Return a valid access token, refresh if needed."""
         await self.async_ensure_token_valid()
-        return self._token.access_token
+        return cast("TokenResponse", self._token).access_token
 
     async def async_ensure_token_valid(self) -> None:
         """Ensure that the current token is valid."""
@@ -143,7 +222,7 @@ class VolvoCarsAuth(AccessTokenManager):
         if state:
             query |= {"state": state}
 
-        return str(URL(AUTHORIZE_URL).with_query(query))
+        return str(URL(self._server.authorize_url).with_query(query))
 
     async def async_request_token(self, code: str) -> TokenResponse:
         """Request access token."""
@@ -156,7 +235,7 @@ class VolvoCarsAuth(AccessTokenManager):
 
         response = await self._async_request(
             hdrs.METH_POST,
-            TOKEN_URL,
+            self._server.token_url,
             headers={"Authorization": f"Basic {self._encoded_credentials}"},
             data=data,
             operation="tokens",
@@ -174,11 +253,14 @@ class VolvoCarsAuth(AccessTokenManager):
 
         response = await self._async_request(
             hdrs.METH_POST,
-            TOKEN_URL,
+            self._server.token_url,
             headers={"Authorization": f"Basic {self._encoded_credentials}"},
             data=data,
             operation="token refresh",
         )
+
+        # Keep the current refresh token if the server doesn't rotate it.
+        response.setdefault("refresh_token", refresh_token)
 
         self._token = self._create_token_response(response)
         return self._token

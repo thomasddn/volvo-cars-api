@@ -11,8 +11,61 @@ class RestrictedScope(StrEnum):
     ENGINE_START_STOP = "conve:engine_start_stop"
     HONK_FLASH = "conve:honk_flash"
     LOCATION = "location:read"
+    WALLBOX_WRITE = "energy_device:wallbox:write"
+    WALLBOX_CONTROL = "energy_device:wallbox:control"
+
+
+OPENID_SCOPES = ["openid"]
+
+# Connected Vehicle API scopes, excluding restricted scopes
+CONVE_SCOPES = [
+    "conve:battery_charge_level",
+    "conve:brake_status",
+    "conve:climatization_start_stop",
+    "conve:command_accessibility",
+    "conve:commands",
+    "conve:connectivity_status",
+    "conve:diagnostics_engine_status",
+    "conve:diagnostics_workshop",
+    "conve:doors_status",
+    "conve:engine_status",
+    "conve:environment",
+    "conve:fuel_status",
+    "conve:lock_status",
+    "conve:navigation",
+    "conve:odometer_status",
+    "conve:trip_statistics",
+    "conve:tyre_status",
+    "conve:vehicle_relation",
+    "conve:warnings",
+    "conve:windows_status",
+]
+
+# Energy API scopes
+ENERGY_SCOPES = [
+    "energy:capability:read",
+    "energy:state:read",
+]
+
+# Energy device scopes, excluding restricted scopes
+ENERGY_DEVICE_SCOPES = [
+    "energy_device:user_id_token:readwrite",
+    "energy_device:wallbox:read",
+]
 
 DEFAULT_SCOPES = [
+    *OPENID_SCOPES,
+    *CONVE_SCOPES,
+    *ENERGY_SCOPES,
+    *ENERGY_DEVICE_SCOPES,
+]
+
+ALL_SCOPES = DEFAULT_SCOPES + [s.value for s in RestrictedScope]
+
+# Scopes for the legacy Volvo ID system (client IDs starting with `dc-`). Frozen so
+# existing applications don't request scopes they were never registered with.
+# To be removed after the Volvo ID migration deadline.
+LEGACY_DEFAULT_SCOPES = [
     "openid",
     "conve:battery_charge_level",
     "conve:brake_status",
@@ -32,18 +85,14 @@ DEFAULT_SCOPES = [
     "conve:warnings",
     "conve:windows_status",
     "energy:capability:read",
-    "energy:state:read"
+    "energy:state:read",
 ]
 
-DEPRECATED_SCOPES = [
-    "energy:battery_charge_level",
-    "energy:charging_connection_status",
-    "energy:charging_current_limit",
-    "energy:charging_system_status",
-    "energy:electric_range",
-    "energy:estimated_charging_time",
-    "energy:recharge_status",
-    "energy:target_battery_level",
+LEGACY_ALL_SCOPES = [
+    *LEGACY_DEFAULT_SCOPES,
+    RestrictedScope.LOCK.value,
+    RestrictedScope.UNLOCK.value,
+    RestrictedScope.ENGINE_START_STOP.value,
+    RestrictedScope.HONK_FLASH.value,
+    RestrictedScope.LOCATION.value,
 ]
-
-ALL_SCOPES = DEFAULT_SCOPES + [s.value for s in RestrictedScope]

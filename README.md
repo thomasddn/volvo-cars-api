@@ -10,13 +10,44 @@ This python library lets you use the [Volvo Cars API](https://developer.volvocar
 
 You'll need a Volvo Developers account and create an [API application](https://developer.volvocars.com/account/). Make sure to fill in all required fields and write down the retrieved client id and secret.
 
+## Volvo ID migration
+
+Volvo is [migrating Volvo ID](https://developer.volvocars.com/news/volvoid-migration/) to a new authorization server. API applications with a client id starting with `dc-` stop working after **31 January 2027**.
+
+To migrate:
+
+1. Create a new API application on your [account page](https://developer.volvocars.com/account/). Its client id starts with `vid-dc-`.
+2. Use the new client id, client secret **and** VCC API key.
+3. Sign in again. Existing tokens can't be reused with the new application.
+4. Delete the old application.
+
+This library selects the authorization server based on the client id, so both kinds of applications work during the transition period. `dc-` clients use the legacy server and log a warning.
+
+When signing in on the new server, check **Remember me**. Without it, the refresh token expires together with the login session and you'll have to sign in again sooner.
+
+### Custom OAuth 2.0 flows
+
+If you implement the OAuth 2.0 flow yourself instead of using `VolvoCarsAuth`, use `get_volvoid_server` to get the correct endpoints and scopes for a client id:
+
+```py
+from volvocarsapi.auth import get_volvoid_server
+
+server = get_volvoid_server(client_id)
+server.authorize_url
+server.token_url
+server.default_scopes  # Scopes without restricted scopes
+server.all_scopes  # Scopes including restricted scopes
+```
+
+The `AUTHORIZE_URL` and `TOKEN_URL` constants are deprecated. They keep pointing to the legacy server until the migration deadline has passed.
+
 ## Usage
 
 A script is worth a thousand words.
 
 ```py
 # Retrieved at the end of the API application registration process
-client_id = "abc"
+client_id = "vid-dc-abc"
 client_secret = "very-secret-key"
 
 # Scopes that have been requested during the API application registration. You can also
@@ -47,7 +78,7 @@ auth = VolvoCarsAuth(
     client_secret=client_secret,
     scopes=scopes,
     redirect_uri=redirect_uri)
-auth_uri = await auth.get_auth_uri() # optionally pass state
+auth_uri = auth.get_auth_uri() # optionally pass state
 
 # Redirect user to auth_uri and wait for the callback
 # ...
