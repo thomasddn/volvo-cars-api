@@ -1,0 +1,70 @@
+opencollection: 1.0.0
+
+info:
+  name: volvo
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  headers:
+    - name: vcc-api-key
+      value: "{{api_key}}"
+  auth:
+    type: oauth2
+    flow: authorization_code
+    authorizationUrl: https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/auth
+    accessTokenUrl: https://auth.volvocars.com/realms/volvocars/protocol/openid-connect/token
+    credentials:
+      clientId: "{{client_id}}"
+      clientSecret: "{{client_secret}}"
+      placement: basic_auth_header
+    scope: conve:battery_charge_level conve:brake_status conve:climatization_start_stop conve:command_accessibility conve:commands conve:connectivity_status conve:diagnostics_engine_status conve:diagnostics_workshop conve:doors_status conve:engine_start_stop conve:engine_status conve:environment conve:fuel_status conve:honk_flash conve:lock conve:lock_status conve:navigation conve:odometer_status conve:trip_statistics conve:tyre_status conve:unlock conve:vehicle_relation conve:warnings conve:windows_status energy:capability:read energy:state:read energy_device:user_id_token:readwrite energy_device:wallbox:read energy_device:wallbox:write energy_device:wallbox:control location:read
+    state: ha-volvo-dev
+    pkce: {}
+    tokenConfig:
+      id: credentials
+      placement:
+        header: Bearer
+      source: access_token
+    settings:
+      autoFetchToken: true
+      autoRefreshToken: true
+  variables:
+    - name: api_url
+      value: https://api.volvocars.com
+    - name: connected_vehicle
+      value: /connected-vehicle/v2
+    - name: energy
+      value: /energy/v2
+    - name: energy_device
+      value: /energy-device/v1
+    - name: location
+      value: /location/v1
+
+docs:
+  content: |-
+    # Using the API collection
+
+    * Your Volvo API Application needs to be configured with `https://oauth.usebruno.com/vscode/callback` as one of the `Redirect URI(s)`.
+    * Create a Collection Environment with the following variables:
+      * client_id
+      * client_secret
+      * api_key
+      * vin
+      * wallbox_id
+  type: text/markdown
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

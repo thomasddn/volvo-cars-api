@@ -1,0 +1,18 @@
+info:
+  name: Stop engine
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{api_url}}{{connected_vehicle}}/vehicles/{{vin}}/commands/engine-stop"
+  body:
+    type: json
+    data: "{}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

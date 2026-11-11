@@ -1,0 +1,22 @@
+info:
+  name: Add user ID token
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{api_url}}{{energy_device}}/user/idTokens"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Thor",
+        "token": "3034000000000000000003AE"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

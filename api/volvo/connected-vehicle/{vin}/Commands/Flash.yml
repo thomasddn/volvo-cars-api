@@ -1,0 +1,18 @@
+info:
+  name: Flash
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{api_url}}{{connected_vehicle}}/vehicles/{{vin}}/commands/flash"
+  body:
+    type: json
+    data: "{}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

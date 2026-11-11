@@ -1,0 +1,18 @@
+info:
+  name: Stop climatisation
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{api_url}}{{connected_vehicle}}/vehicles/{{vin}}/commands/climatization-stop"
+  body:
+    type: json
+    data: "{}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

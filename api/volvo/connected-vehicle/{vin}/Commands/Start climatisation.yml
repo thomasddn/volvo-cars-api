@@ -1,0 +1,18 @@
+info:
+  name: Start climatisation
+  type: http
+  seq: 9
+
+http:
+  method: POST
+  url: "{{api_url}}{{connected_vehicle}}/vehicles/{{vin}}/commands/climatization-start"
+  body:
+    type: json
+    data: "{}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

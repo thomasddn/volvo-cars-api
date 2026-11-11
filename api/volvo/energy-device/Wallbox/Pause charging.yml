@@ -1,0 +1,15 @@
+info:
+  name: Pause charging
+  type: http
+  seq: 4
+
+http:
+  method: POST
+  url: "{{api_url}}{{energy_device}}/wallbox/{{wallbox_id}}/pause"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

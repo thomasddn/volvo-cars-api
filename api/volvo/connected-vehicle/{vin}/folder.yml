@@ -1,0 +1,6 @@
+info:
+  name: "{vin}"
+  type: folder
+  seq: 1
+
+request: {}

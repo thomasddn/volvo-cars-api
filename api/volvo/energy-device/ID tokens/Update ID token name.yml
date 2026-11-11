@@ -1,0 +1,22 @@
+info:
+  name: Update ID token name
+  type: http
+  seq: 3
+
+http:
+  method: PATCH
+  url: "{{api_url}}{{energy_device}}/user/idTokens"
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Thor",
+        "token": "3034000000000000000003AE"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

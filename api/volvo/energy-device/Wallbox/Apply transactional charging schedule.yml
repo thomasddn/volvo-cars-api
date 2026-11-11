@@ -1,0 +1,39 @@
+info:
+  name: Apply transactional charging schedule
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: "{{api_url}}{{energy_device}}/wallbox/{{wallbox_id}}/chargingSchedule"
+  body:
+    type: json
+    data: |-
+      {
+        "start": "2026-10-15T10:00:00Z",
+        "periods": [
+          {
+            "$type": "AmperePeriod",
+            "duration": "01:00:00",
+            "ampere": 16
+          },
+          {
+            "$type": "WattPeriod",
+            "duration": "01:30:00",
+            "watt": 2000
+          },
+          {
+            "$type": "AmperePeriod",
+            "duration": "01:30:00",
+            "ampere": 0
+          }
+        ],
+        "scheduleId": null
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

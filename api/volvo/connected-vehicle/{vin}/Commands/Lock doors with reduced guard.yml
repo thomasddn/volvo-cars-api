@@ -1,0 +1,18 @@
+info:
+  name: Lock doors with reduced guard
+  type: http
+  seq: 10
+
+http:
+  method: POST
+  url: "{{api_url}}{{connected_vehicle}}/vehicles/{{vin}}/commands/lock-reduced-guard"
+  body:
+    type: json
+    data: "{}"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,19 @@
+info:
+  name: Set discharging amp limit
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: "{{api_url}}{{energy_device}}/wallbox/{{wallbox_id}}/setDischargingAmpLimit?limit=8"
+  params:
+    - name: limit
+      value: "8"
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,15 @@
+info:
+  name: Get engine values
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "{{api_url}}{{connected_vehicle}}/vehicles/{{vin}}/engine"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

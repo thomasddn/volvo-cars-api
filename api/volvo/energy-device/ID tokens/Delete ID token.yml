@@ -1,0 +1,19 @@
+info:
+  name: Delete ID token
+  type: http
+  seq: 4
+
+http:
+  method: DELETE
+  url: "{{api_url}}{{energy_device}}/user/idTokens/:id"
+  params:
+    - name: id
+      value: 3034000000000000000003AE
+      type: path
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

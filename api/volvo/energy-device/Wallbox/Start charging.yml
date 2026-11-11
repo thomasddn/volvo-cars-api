@@ -1,0 +1,20 @@
+info:
+  name: Start charging
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{api_url}}{{energy_device}}/wallbox/{{wallbox_id}}/start"
+  params:
+    - name: idToken
+      value: 3034000000000000000003AE
+      type: query
+      disabled: true
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
